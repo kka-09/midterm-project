@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# Build wildcard-pattern buckets for a word ladder, one JSON file per word length.
-#
-# Usage: ./build_patterns.sh WORDLIST [OUTDIR]
-#   WORDLIST  text file with one word per line (any length, any case, duplicates ok)
-#   OUTDIR    output directory (default: patterns)
-#
-# Output: OUTDIR/3.json, OUTDIR/4.json, ... one file for every word length found.
-# Each file maps a pattern to the words that match it:
-#   { "*old": ["bold", "cold"], "co*d": ["cold", "cord"], ... }
 
 set -euo pipefail
 
@@ -27,12 +18,7 @@ fi
 mkdir -p "$outdir"
 rm -f "$outdir"/*.json
 
-# 1. Clean: strip CRs, lowercase, keep only a-z words, dedupe.
-# 2. awk builds pattern -> words for every letter position.
-#    A pattern has the same length as its word, so it also tells us the bucket file.
-# 3. sort by length, then pattern.
-# 4. awk writes one JSON file per length.
-{ tr -d '\r' < "$input" | tr 'A-Z' 'a-z' | grep -E '^[a-z]+$' || true; } \
+{ tr -d '\r' < "$input" | tr 'A-Z' 'a-z' | grep -E '^[a-z]+(-[a-z]+)*$' || true; } \
   | sort -u \
   | awk '
     {
