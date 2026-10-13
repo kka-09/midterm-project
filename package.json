@@ -1,0 +1,13 @@
+{
+  "name": "word-ladder-visualizer",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "smoke": "node tools/ladder.mjs --examples",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "cytoscape": "^3.27.0"
+  }
+}

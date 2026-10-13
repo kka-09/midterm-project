@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <title>Word Ladder</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="vendor/cytoscape.min.js" defer></script>
+    <script type="module" src="src/main.js"></script>
+  </head>
+  <body>
+    <div class="app" data-phase="booting">
+      <header class="header">
+        <h1 class="title">Word Ladder</h1>
+        <button
+          id="theme-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="Toggle color theme"
+        >
+          Theme
+        </button>
+      </header>
+
+      <main class="stage">
+        <div id="graph" class="graph" aria-label="Search graph"></div>
+        <button id="recenter" class="recenter" type="button" aria-label="Recenter graph">
+          Recenter
+        </button>
+        <p id="hidden-count" class="hidden-count" hidden></p>
+      </main>
+
+      <section class="sheet" aria-label="Controls">
+        <div class="tabs" role="tablist" aria-label="Panels">
+          <button class="tab" role="tab" data-panel="setup" aria-selected="true">Setup</button>
+          <button class="tab" role="tab" data-panel="frontier" aria-selected="false">Frontier</button>
+          <button class="tab" role="tab" data-panel="stats" aria-selected="false">Stats</button>
+          <button class="tab" role="tab" data-panel="path" aria-selected="false">Path</button>
+        </div>
+
+        <div class="panels">
+          <section class="panel" id="panel-setup" data-panel="setup">
+            <div class="fields">
+              <label class="field">
+                <span>Start</span>
+                <input id="start-input" type="text" value="kata" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
+                <span class="field-error" id="start-error" role="alert"></span>
+              </label>
+              <button id="swap-button" type="button" class="swap" aria-label="Swap start and end">⇄</button>
+              <label class="field">
+                <span>End</span>
+                <input id="end-input" type="text" value="bola" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
+                <span class="field-error" id="end-error" role="alert"></span>
+              </label>
+            </div>
+
+            <label class="field field-algo">
+              <span>Algorithm</span>
+              <select id="algorithm"></select>
+            </label>
+            <p class="algo-note" id="algorithm-note"></p>
+
+            <button id="start-button" type="button" class="primary">Start</button>
+            <div class="examples" id="examples" aria-label="Example pairs"></div>
+          </section>
+
+          <section class="panel" id="panel-frontier" data-panel="frontier" hidden>
+            <p class="panel-title"><span id="frontier-label">Queue</span> · <span id="frontier-total">0</span> words</p>
+            <ol class="word-list" id="frontier-list"></ol>
+          </section>
+
+          <section class="panel" id="panel-stats" data-panel="stats" hidden>
+            <dl class="stats">
+              <div><dt>Discovered</dt><dd id="stat-discovered">0</dd></div>
+              <div><dt>Visited</dt><dd id="stat-visited">0</dd></div>
+              <div><dt>Current depth</dt><dd id="stat-depth">–</dd></div>
+              <div><dt>Drawn</dt><dd id="stat-drawn">0</dd></div>
+              <div><dt>Hidden</dt><dd id="stat-hidden">0</dd></div>
+              <div><dt>Path length</dt><dd id="stat-path">–</dd></div>
+            </dl>
+          </section>
+
+          <section class="panel" id="panel-path" data-panel="path" hidden>
+            <ol class="word-list" id="path-list"></ol>
+          </section>
+        </div>
+
+        <div class="transport">
+          <button id="back-button" type="button" class="transport-button" aria-label="Step back">◀ Back</button>
+          <button id="play-button" type="button" class="transport-button primary" aria-label="Play or pause">Play</button>
+          <button id="step-button" type="button" class="transport-button" aria-label="Step forward">Step ▶</button>
+        </div>
+
+        <div class="scrub-row">
+          <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Scrub timeline" />
+        </div>
+
+        <div class="speed-row">
+          <label for="speed">Speed</label>
+          <input id="speed" type="range" min="0" max="6" step="1" value="2" aria-label="Playback speed" />
+          <output id="speed-label" for="speed">4/s</output>
+        </div>
+      </section>
+
+      <div class="overlay" id="status-overlay" hidden>
+        <div class="overlay-card">
+          <p id="status-message"></p>
+          <button id="retry-button" type="button" class="primary">Retry</button>
+        </div>
+      </div>
+
+      <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+    </div>
+  </body>
+</html>

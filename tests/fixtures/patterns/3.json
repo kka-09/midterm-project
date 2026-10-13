@@ -1,0 +1,14 @@
+{
+  "*at": ["bat", "cat"],
+  "*og": ["cog", "dog"],
+  "*ot": ["cot", "dot"],
+  "b*t": ["bat"],
+  "ba*": ["bat"],
+  "c*g": ["cog"],
+  "c*t": ["cat", "cot"],
+  "ca*": ["cat"],
+  "co*": ["cog", "cot"],
+  "d*g": ["dog"],
+  "d*t": ["dot"],
+  "do*": ["dog", "dot"]
+}
