@@ -246,13 +246,14 @@ Karena pencarian berbentuk log, animasi bisa dimundurkan (**Back**), di-*scrub*,
 
 ## Tim
 
-<!-- Isi dengan nama dan NRP anggota kelompok -->
-
-| Nama | NRP | Kontribusi |
-|---|---|---|
-| _nama_ | _NRP_ | _peran_ |
-
----
+| Nama | NRP |
+|---|---|
+| Abdul Ghofur Luqman Salim | 5053251007 |
+| Daffa Randika | 5053251017 |
+| Yuwand Arteta Hydri Wahyu Putra | 5053251020 |
+| Ahmad Zaidaan | 5053251021 |
+| Deara Briliana Putri | 5053251027 |
+| Nabila Ainiya Rahman | 5053251034 |
 
 ## Lisensi & Atribusi
 
