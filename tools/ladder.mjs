@@ -96,7 +96,7 @@ async function runLadder(startInput, endInput, algorithmId) {
   console.log(`${algorithm.label} (${algorithmId}): ${validation.start} -> ${validation.end}`);
   console.log(`  found:      ${result.found}`);
   console.log(`  path:       ${result.found ? result.path.join(' -> ') : '(none)'}`);
-  console.log(`  pathLength: ${result.stats.pathLength}`);
+  console.log(`  transitions: ${result.stats.pathLength}`);
   console.log(`  discovered: ${result.stats.discovered}`);
   console.log(`  visited:    ${result.stats.visited}`);
   console.log(`  events:     ${result.events.length}`);

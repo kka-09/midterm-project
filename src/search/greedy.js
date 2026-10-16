@@ -84,7 +84,7 @@ export function runGreedy(dict, start, end, { maxVisits = Infinity, heuristic = 
       return makeResult(start, end, true, path, events, {
         discovered: discovered.size,
         visited,
-        pathLength: path.length,
+        pathLength: path.length - 1,
       });
     }
 

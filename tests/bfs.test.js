@@ -35,14 +35,14 @@ test('BFS-1: bolt -> core golden events', () => {
   for (let i = 0; i < expected.length; i++) {
     assert.deepEqual(result.events[i], expected[i], `event ${i + 1}`);
   }
-  assert.deepEqual(result.stats, { discovered: 7, visited: 7, pathLength: 5 });
+  assert.deepEqual(result.stats, { discovered: 7, visited: 7, pathLength: 4 });
   assert.equal(result.found, true);
 });
 
 test('BFS-2: cat -> dog on the 3-letter fixture', () => {
   const result = runBfs(dict3, 'cat', 'dog');
   assert.deepEqual(result.path, ['cat', 'cot', 'cog', 'dog']);
-  assert.deepEqual(result.stats, { discovered: 6, visited: 6, pathLength: 4 });
+  assert.deepEqual(result.stats, { discovered: 6, visited: 6, pathLength: 3 });
 });
 
 test('BFS-3: start === end returns [discover, visit, path]', () => {

@@ -41,7 +41,7 @@ test('GR-1: bolt -> core golden events', () => {
   for (let i = 0; i < expected.length; i++) {
     assert.deepEqual(result.events[i], expected[i], `event ${i + 1}`);
   }
-  assert.deepEqual(result.stats, { discovered: 7, visited: 5, pathLength: 5 });
+  assert.deepEqual(result.stats, { discovered: 7, visited: 5, pathLength: 4 });
   assert.equal(result.found, true);
 });
 
@@ -66,7 +66,7 @@ test('GR-2: suboptimal golden on a fake dictionary', () => {
   for (let i = 0; i < expected.length; i++) {
     assert.deepEqual(result.events[i], expected[i], `event ${i + 1}`);
   }
-  assert.deepEqual(result.stats, { discovered: 6, visited: 5, pathLength: 5 });
+  assert.deepEqual(result.stats, { discovered: 6, visited: 5, pathLength: 4 });
   const bfs = runBfs(dict, 's', 't');
   assert.deepEqual(bfs.path, ['s', 'c', 't']);
 });

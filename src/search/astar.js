@@ -91,7 +91,7 @@ export function runAstar(dict, start, end, { maxVisits = Infinity, heuristic = h
       return makeResult(start, end, true, path, events, {
         discovered: discovered.size,
         visited,
-        pathLength: path.length,
+        pathLength: path.length - 1,
       });
     }
 

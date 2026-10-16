@@ -263,10 +263,16 @@ export function validateEvents(result, dict, { maxVisits = Infinity } = {}) {
     if (result.stats.visited !== visits) {
       fail('V10', `stats.visited must be ${visits}`);
     }
-    const expectedLength = Array.isArray(result.path) ? result.path.length : 0;
+    
+    const expectedLength =
+      Array.isArray(result.path) && result.path.length > 0
+        ? result.path.length - 1
+        : 0;
+
     if (result.stats.pathLength !== expectedLength) {
       fail('V10', `stats.pathLength must be ${expectedLength}`);
     }
+
   }
 
   return errors.length === 0 ? { ok: true } : { ok: false, errors };
