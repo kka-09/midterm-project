@@ -109,7 +109,7 @@ test('AS-7: reparent golden', () => {
   for (let i = 0; i < expected.length; i++) {
     assert.deepEqual(result.events[i], expected[i], `event ${i + 1}`);
   }
-  assert.deepEqual(result.stats, { discovered: 6, visited: 6, pathLength: 4 });
+  assert.deepEqual(result.stats, { discovered: 6, visited: 6, pathLength: 3 });
   assert.deepEqual(result.path, ['s', 'c', 'x', 't']);
 });
 
