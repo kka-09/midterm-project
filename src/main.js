@@ -332,22 +332,33 @@ function paintPanels() {
   );
 
   dom.statDiscovered.textContent = String(app.replay.state.discovered);
-  dom.statVisited.textContent = String(app.replay.state.visited);
-  const current = app.replay.state.current;
-  dom.statDepth.textContent = current ? String(app.replay.state.depthOf(current) ?? '\u2013') : '\u2013';
-  dom.statDrawn.textContent = String(app.renderer ? app.renderer.counts().rendered : 0);
-  dom.statHidden.textContent = String(app.renderer ? app.renderer.counts().hidden : 0);
-  dom.statPath.textContent = app.replay.state.pathWords ? String(app.replay.state.pathWords.length) : '\u2013';
+dom.statVisited.textContent = String(app.replay.state.visited);
 
-  const pathWords = app.replay.state.pathWords ?? [];
-  dom.pathList.replaceChildren(
-    ...pathWords.map((word) => {
-      const item = document.createElement('li');
-      item.textContent = word;
-      return item;
-    }),
-  );
+const current = app.replay.state.current;
+dom.statDepth.textContent = current
+  ? String(app.replay.state.depthOf(current) ?? '\u2013')
+  : '\u2013';
 
+dom.statDrawn.textContent = String(
+  app.renderer ? app.renderer.counts().rendered : 0,
+);
+dom.statHidden.textContent = String(
+  app.renderer ? app.renderer.counts().hidden : 0,
+);
+
+const pathWords = app.replay.state.pathWords ?? [];
+
+dom.statPath.textContent = pathWords.length > 0
+  ? String(pathWords.length - 1)
+  : '\u2013';
+
+dom.pathList.replaceChildren(
+  ...pathWords.map((word) => {
+    const item = document.createElement('li');
+    item.textContent = word;
+    return item;
+  }),
+);
   updateHiddenCount();
 }
 
