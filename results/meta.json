@@ -1,0 +1,8 @@
+{
+  "seed": 20260,
+  "reps": 10,
+  "node": "v24.18.0",
+  "platform": "Windows_NT 10.0.26200 (x64)",
+  "cpu": "AMD Ryzen 7 8845HS w/ Radeon 780M Graphics x16",
+  "ramGB": 14
+}
