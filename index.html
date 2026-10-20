@@ -1,119 +1,249 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <meta name="color-scheme" content="light dark" />
-    <title>Word Ladder</title>
-    <link rel="stylesheet" href="styles.css" />
-    <script src="vendor/cytoscape.min.js" defer></script>
-    <script type="module" src="src/main.js"></script>
-  </head>
-  <body>
-    <div class="app" data-phase="booting">
-      <header class="header">
-        <h1 class="title">Word Ladder</h1>
-        <button
-          id="theme-toggle"
-          class="icon-button"
-          type="button"
-          aria-label="Toggle color theme"
-        >
-          Theme
-        </button>
-      </header>
+<html lang="id">
 
-      <main class="stage">
-        <div id="graph" class="graph" aria-label="Search graph"></div>
-        <button id="recenter" class="recenter" type="button" aria-label="Recenter graph">
-          Recenter
-        </button>
-        <p id="hidden-count" class="hidden-count" hidden></p>
-      </main>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Word Ladder Visualizer</title>
+  <!-- Modern Typography: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="vendor/cytoscape.min.js" defer></script>
+  <script type="module" src="src/main.js"></script>
+</head>
 
-      <section class="sheet" aria-label="Controls">
-        <div class="tabs" role="tablist" aria-label="Panels">
-          <button class="tab" role="tab" data-panel="setup" aria-selected="true">Setup</button>
-          <button class="tab" role="tab" data-panel="frontier" aria-selected="false">Frontier</button>
-          <button class="tab" role="tab" data-panel="stats" aria-selected="false">Stats</button>
-          <button class="tab" role="tab" data-panel="path" aria-selected="false">Path</button>
+<body>
+  <div class="app" data-phase="booting">
+    <header class="header">
+      <div class="header-brand">
+        <div class="brand-icon" aria-hidden="true">🪜</div>
+        <div class="brand-text">
+          <h1 class="title">Word Ladder Visualizer</h1>
+          <span class="subtitle">Eksplorasi Graf: BFS · Greedy · A*</span>
+        </div>
+      </div>
+      <button id="theme-toggle" class="icon-button theme-btn" type="button" aria-label="Toggle color theme"
+        title="Ganti Tema (Terang/Gelap)">
+        <span class="theme-icon" aria-hidden="true">🌓</span>
+        <span class="theme-label">Tema</span>
+      </button>
+    </header>
+
+    <main class="stage">
+      <!-- Live HUD (Heads-Up Display) for real-time algorithm insight -->
+      <div class="hud" id="hud" aria-live="polite">
+        <div class="hud-header">
+          <div class="hud-status">
+            <span class="status-pulse" id="hud-pulse"></span>
+            <span class="status-label" id="hud-status-text">Siap Memulai</span>
+          </div>
+          <div class="hud-target-pill" title="Target Kata">
+            <span class="pill-icon">🎯</span>
+            <span class="pill-label">Target:</span>
+            <strong id="hud-target-word" class="font-mono">bola</strong>
+          </div>
         </div>
 
-        <div class="panels">
-          <section class="panel" id="panel-setup" data-panel="setup">
-            <div class="fields">
-              <label class="field">
-                <span>Start</span>
-                <input id="start-input" type="text" value="kata" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
-                <span class="field-error" id="start-error" role="alert"></span>
-              </label>
-              <button id="swap-button" type="button" class="swap" aria-label="Swap start and end">⇄</button>
-              <label class="field">
-                <span>End</span>
-                <input id="end-input" type="text" value="bola" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
-                <span class="field-error" id="end-error" role="alert"></span>
-              </label>
+        <div class="hud-body" id="hud-body">
+          <div class="hud-words" id="hud-words">
+            <div class="word-chip from" id="hud-from-chip">
+              <span class="chip-label">Dari</span>
+              <span class="chip-text font-mono" id="hud-from-word">–</span>
             </div>
-
-            <label class="field field-algo">
-              <span>Algorithm</span>
-              <select id="algorithm"></select>
-            </label>
-            <p class="algo-note" id="algorithm-note"></p>
-
-            <button id="start-button" type="button" class="primary">Start</button>
-            <div class="examples" id="examples" aria-label="Example pairs"></div>
-          </section>
-
-          <section class="panel" id="panel-frontier" data-panel="frontier" hidden>
-            <p class="panel-title"><span id="frontier-label">Queue</span> · <span id="frontier-total">0</span> words</p>
-            <ol class="word-list" id="frontier-list"></ol>
-          </section>
-
-          <section class="panel" id="panel-stats" data-panel="stats" hidden>
-            <dl class="stats">
-              <div><dt>Discovered</dt><dd id="stat-discovered">0</dd></div>
-              <div><dt>Visited</dt><dd id="stat-visited">0</dd></div>
-              <div><dt>Current depth</dt><dd id="stat-depth">–</dd></div>
-              <div><dt>Drawn</dt><dd id="stat-drawn">0</dd></div>
-              <div><dt>Hidden</dt><dd id="stat-hidden">0</dd></div>
-              <div><dt>Path length</dt><dd id="stat-path">–</dd></div>
-            </dl>
-          </section>
-
-          <section class="panel" id="panel-path" data-panel="path" hidden>
-            <ol class="word-list" id="path-list"></ol>
-          </section>
+            <div class="hud-arrow" aria-hidden="true">➔</div>
+            <div class="word-chip to active" id="hud-to-chip">
+              <span class="chip-label">Kata Aktif</span>
+              <span class="chip-text font-mono" id="hud-to-word">kata</span>
+            </div>
+          </div>
+          <div class="hud-diff-desc" id="hud-diff-desc">
+            Titik awal: <strong class="font-mono">kata</strong>
+          </div>
         </div>
 
-        <div class="transport">
-          <button id="back-button" type="button" class="transport-button" aria-label="Step back">◀ Back</button>
-          <button id="play-button" type="button" class="transport-button primary" aria-label="Play or pause">Play</button>
-          <button id="step-button" type="button" class="transport-button" aria-label="Step forward">Step ▶</button>
-        </div>
-
-        <div class="scrub-row">
-          <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Scrub timeline" />
-        </div>
-
-        <div class="speed-row">
-          <label for="speed">Speed</label>
-          <input id="speed" type="range" min="0" max="6" step="1" value="2" aria-label="Playback speed" />
-          <output id="speed-label" for="speed">4/s</output>
-        </div>
-      </section>
-
-      <div class="overlay" id="status-overlay" hidden>
-        <div class="overlay-card">
-          <p id="status-message"></p>
-          <button id="retry-button" type="button" class="primary">Retry</button>
+        <div class="hud-footer">
+          <div class="hud-mini-stat">
+            <span class="m-label">Langkah (Depth)</span>
+            <strong class="m-val" id="hud-depth-val">0</strong>
+          </div>
+          <div class="hud-mini-stat">
+            <span class="m-label">Dalam Antrean</span>
+            <strong class="m-val" id="hud-queue-val">0</strong>
+          </div>
+          <div class="hud-mini-stat">
+            <span class="m-label">Telah Dikunjungi</span>
+            <strong class="m-val" id="hud-visited-val">0</strong>
+          </div>
         </div>
       </div>
 
-      <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+      <!-- Graph canvas -->
+      <div id="graph" class="graph" aria-label="Search graph"></div>
+
+      <!-- Floating Stage Action Bar -->
+      <div class="stage-actions">
+        <button id="recenter" class="action-btn" type="button" aria-label="Recenter graph" title="Pusatkan Graf">
+          <span aria-hidden="true">🎯</span> Pusatkan
+        </button>
+        <button id="focus-current" class="action-btn" type="button" aria-label="Focus current word"
+          title="Fokus ke Kata Aktif">
+          <span aria-hidden="true">🔍</span> Fokus Aktif
+        </button>
+        <label class="follow-toggle" title="Kamera otomatis mengikuti proses pencarian">
+          <input type="checkbox" id="auto-follow" checked />
+          <span class="toggle-text">Auto-Follow</span>
+        </label>
+      </div>
+
+      <p id="hidden-count" class="hidden-count" hidden></p>
+
+      <!-- Graph Visual Legend -->
+      <div class="graph-legend" aria-label="Keterangan Graf">
+        <div class="legend-item"><span class="legend-dot start"></span><span>Awal</span></div>
+        <div class="legend-item"><span class="legend-dot end"></span><span>Target</span></div>
+        <div class="legend-item"><span class="legend-dot current"></span><span>Sedang Diperiksa</span></div>
+        <div class="legend-item"><span class="legend-dot visited"></span><span>Telah Dikunjungi</span></div>
+        <div class="legend-item"><span class="legend-dot frontier"></span><span>Antrean</span></div>
+        <div class="legend-item"><span class="legend-dot path"></span><span>Jalur Solusi</span></div>
+      </div>
+    </main>
+
+    <section class="sheet" aria-label="Controls">
+      <div class="tabs" role="tablist" aria-label="Panels">
+        <button class="tab" role="tab" data-panel="setup" aria-selected="true">⚙️ Setup</button>
+        <button class="tab" role="tab" data-panel="frontier" aria-selected="false">⏳ Antrean (<span
+            id="tab-frontier-count">0</span>)</button>
+        <button class="tab" role="tab" data-panel="stats" aria-selected="false">📊 Statistik</button>
+        <button class="tab" role="tab" data-panel="path" aria-selected="false">🪜 Solusi Ladder (<span
+            id="tab-path-count">0</span>)</button>
+      </div>
+
+      <div class="panels">
+        <section class="panel" id="panel-setup" data-panel="setup">
+          <div class="fields">
+            <label class="field">
+              <span>Kata Awal (Start)</span>
+              <input id="start-input" type="text" value="kata" autocapitalize="off" autocomplete="off" autocorrect="off"
+                spellcheck="false" enterkeyhint="go" placeholder="contoh: kata" />
+              <span class="field-error" id="start-error" role="alert"></span>
+            </label>
+            <button id="swap-button" type="button" class="swap" aria-label="Swap start and end"
+              title="Tukar Kata">⇄</button>
+            <label class="field">
+              <span>Kata Tujuan (End)</span>
+              <input id="end-input" type="text" value="bola" autocapitalize="off" autocomplete="off" autocorrect="off"
+                spellcheck="false" enterkeyhint="go" placeholder="contoh: bola" />
+              <span class="field-error" id="end-error" role="alert"></span>
+            </label>
+          </div>
+
+          <label class="field field-algo">
+            <span>Pilihan Algoritma</span>
+            <select id="algorithm"></select>
+          </label>
+          <p class="algo-note" id="algorithm-note"></p>
+
+          <button id="start-button" type="button" class="primary start-btn">
+            <span>Mulai Visualisasi</span> <span class="btn-arrow">🚀</span>
+          </button>
+
+          <div class="examples-wrapper">
+            <span class="examples-title">Contoh Pasangan Kata:</span>
+            <div class="examples" id="examples" aria-label="Example pairs"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-frontier" data-panel="frontier" hidden>
+          <p class="panel-title"><span id="frontier-label">Queue</span> · <span id="frontier-total">0</span> kata
+            menunggu dievaluasi</p>
+          <ol class="word-list frontier-card-list" id="frontier-list"></ol>
+        </section>
+
+        <section class="panel" id="panel-stats" data-panel="stats" hidden>
+          <dl class="stats">
+            <div class="stat-card">
+              <dt><span>🔍</span> Total Ditemukan</dt>
+              <dd id="stat-discovered">0</dd>
+            </div>
+            <div class="stat-card">
+              <dt><span>👣</span> Total Dikunjungi</dt>
+              <dd id="stat-visited">0</dd>
+            </div>
+            <div class="stat-card">
+              <dt><span>📏</span> Kedalaman (Depth)</dt>
+              <dd id="stat-depth">–</dd>
+            </div>
+            <div class="stat-card">
+              <dt><span>🎨</span> Node Digambar</dt>
+              <dd id="stat-drawn">0</dd>
+            </div>
+            <div class="stat-card">
+              <dt><span>📦</span> Node Tersembunyi</dt>
+              <dd id="stat-hidden">0</dd>
+            </div>
+            <div class="stat-card highlight">
+              <dt><span>🪜</span> Panjang Solusi (Langkah)</dt>
+              <dd id="stat-path">–</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="panel" id="panel-path" data-panel="path" hidden>
+          <div class="path-header">
+            <span class="path-title">Transformasi Kata Bertahap (Word Ladder)</span>
+            <span class="path-hint">Setiap langkah mengganti tepat 1 huruf</span>
+          </div>
+          <ol class="word-list ladder-list" id="path-list"></ol>
+        </section>
+      </div>
+
+      <div class="transport">
+        <button id="back-button" type="button" class="transport-button" aria-label="Step back" title="Langkah Mundur">
+          <span>◀</span> Mundur
+        </button>
+        <button id="play-button" type="button" class="transport-button primary play-btn" aria-label="Play or pause">
+          <span id="play-icon">▶</span> <span id="play-text">Putar</span>
+        </button>
+        <button id="step-button" type="button" class="transport-button" aria-label="Step forward" title="Langkah Maju">
+          Maju <span>▶</span>
+        </button>
+        <button id="skip-button" type="button" class="transport-button skip-btn" aria-label="Skip to end" title="Lompat Langsung ke Solusi">
+          <span>⏭️</span> Solusi
+        </button>
+      </div>
+
+      <div class="scrub-container">
+        <div class="scrub-labels">
+          <span class="scrub-caption">Progres Timeline:</span>
+          <span id="step-counter" class="step-counter">0 / 0</span>
+        </div>
+        <div class="scrub-row">
+          <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Scrub timeline" />
+        </div>
+      </div>
+
+      <div class="speed-row">
+        <label for="speed">⚡ Kecepatan:</label>
+        <input id="speed" type="range" min="0" max="8" step="1" value="2" aria-label="Playback speed" />
+        <output id="speed-label" for="speed">4/s</output>
+        <button id="turbo-btn" type="button" class="turbo-badge-btn" title="Set ke Kecepatan Maksimal 240/s">🚀 Turbo</button>
+      </div>
+    </section>
+
+    <div class="overlay" id="status-overlay" hidden>
+      <div class="overlay-card">
+        <p id="status-message"></p>
+        <button id="retry-button" type="button" class="primary">Coba Lagi</button>
+      </div>
     </div>
-  </body>
+
+    <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+  </div>
+</body>
+
 </html>

@@ -23,6 +23,8 @@ const dom = {
   app: document.querySelector('.app'),
   graph: el('graph'),
   recenter: el('recenter'),
+  focusCurrent: el('focus-current'),
+  autoFollow: el('auto-follow'),
   hiddenCount: el('hidden-count'),
   live: el('live'),
   themeToggle: el('theme-toggle'),
@@ -49,14 +51,33 @@ const dom = {
   pathList: el('path-list'),
   back: el('back-button'),
   play: el('play-button'),
+  playIcon: el('play-icon'),
+  playText: el('play-text'),
   step: el('step-button'),
+  skip: el('skip-button'),
+  turboBtn: el('turbo-btn'),
   scrub: el('scrub'),
+  stepCounter: el('step-counter'),
   speed: el('speed'),
   speedLabel: el('speed-label'),
   overlay: el('status-overlay'),
   statusMessage: el('status-message'),
   retry: el('retry-button'),
+  hudStatusText: el('hud-status-text'),
+  hudPulse: el('hud-pulse'),
+  hudTargetWord: el('hud-target-word'),
+  hudFromWord: el('hud-from-word'),
+  hudToWord: el('hud-to-word'),
+  hudFromChip: el('hud-from-chip'),
+  hudDiffDesc: el('hud-diff-desc'),
+  hudDepthVal: el('hud-depth-val'),
+  hudQueueVal: el('hud-queue-val'),
+  hudVisitedVal: el('hud-visited-val'),
+  tabFrontierCount: el('tab-frontier-count'),
 };
+
+const PLAYBACK_SPEEDS = [...SPEED_STOPS, 120, 240];
+let lastFollowTime = 0;
 
 const app = {
   phase: 'booting',
@@ -262,7 +283,17 @@ function runSearch(start, end) {
   });
   app.renderer.fit();
 
-  app.replay = createReplay(result, { speed: SPEED_STOPS[Number(dom.speed.value)] });
+  if (dom.hudTargetWord) dom.hudTargetWord.textContent = end;
+  if (dom.hudToWord) dom.hudToWord.textContent = start;
+  if (dom.hudFromWord) dom.hudFromWord.textContent = '–';
+  if (dom.hudFromChip) dom.hudFromChip.hidden = true;
+  if (dom.hudDiffDesc) dom.hudDiffDesc.textContent = `Titik awal: "${start}"`;
+  if (dom.hudStatusText) dom.hudStatusText.textContent = `Mengeksplorasi (${dom.algorithm.value.toUpperCase()})...`;
+
+  app.replay = createReplay(result, {
+    speed: PLAYBACK_SPEEDS[Number(dom.speed.value)] ?? DEFAULT_SPEED,
+    maxEventsPerTick: 60,
+  });
   app.replay.subscribe(onReplayChange);
   syncHash();
   setPhase('replay');
@@ -276,10 +307,40 @@ function runSearch(start, end) {
 
 /* ---------- replay wiring ---------- */
 
+function getDiff(word1, word2) {
+  if (!word1 || !word2 || word1.length !== word2.length) return null;
+  for (let i = 0; i < word1.length; i++) {
+    if (word1[i] !== word2[i]) {
+      return { index: i, fromChar: word1[i], toChar: word2[i] };
+    }
+  }
+  return null;
+}
+
+function renderWordTiles(word, highlightIndex = -1) {
+  const container = document.createElement('span');
+  container.className = 'word-tiles';
+  for (let i = 0; i < word.length; i++) {
+    const tile = document.createElement('span');
+    tile.className = 'char-tile' + (i === highlightIndex ? ' diff' : '');
+    tile.textContent = word[i].toUpperCase();
+    container.appendChild(tile);
+  }
+  return container;
+}
+
 function onReplayChange(change) {
   if (!app.replay || !app.renderer) return;
   app.renderer.apply(change, app.replay.state);
   updateTransport();
+
+  if (dom.autoFollow?.checked && app.replay.state.current) {
+    const now = performance.now();
+    if (now - lastFollowTime >= 180) {
+      app.renderer.centerOn(app.replay.state.current, false);
+      lastFollowTime = now;
+    }
+  }
 
   const playing = app.replay.playing;
   const now = performance.now();
@@ -321,44 +382,120 @@ function paintPanels() {
   const view = app.replay.state;
   const counts = app.renderer ? app.renderer.counts() : { rendered: 0, hidden: 0, pathDrawn: null };
 
+  const current = app.replay.state.current;
+  const parent = current ? app.replay.state.parentOf(current) : null;
+  const atEnd = app.replay.state.atEnd;
+
+  // Live HUD updates
+  if (dom.hudStatusText) {
+    if (atEnd) {
+      dom.hudStatusText.textContent = app.result?.found ? '🎉 Solusi Ditemukan!' : 'Pencarian Selesai';
+      dom.hudPulse?.classList.toggle('success', !!app.result?.found);
+      dom.hudPulse?.classList.remove('searching');
+    } else if (app.replay.playing) {
+      dom.hudStatusText.textContent = `Mengeksplorasi (${dom.algorithm.value.toUpperCase()})...`;
+      dom.hudPulse?.classList.add('searching');
+      dom.hudPulse?.classList.remove('success');
+    } else {
+      dom.hudStatusText.textContent = 'Pencarian Terjeda';
+      dom.hudPulse?.classList.remove('searching');
+    }
+  }
+
+  if (current) {
+    if (dom.hudToWord) dom.hudToWord.textContent = current;
+    if (parent) {
+      if (dom.hudFromWord) dom.hudFromWord.textContent = parent;
+      if (dom.hudFromChip) dom.hudFromChip.hidden = false;
+      const diff = getDiff(parent, current);
+      if (dom.hudDiffDesc) {
+        if (diff) {
+          dom.hudDiffDesc.innerHTML = `Ubah huruf ke-${diff.index + 1}: <span class="char-badge old">'${diff.fromChar}'</span> ➔ <span class="char-badge new">'${diff.toChar}'</span>`;
+        } else {
+          dom.hudDiffDesc.textContent = `Transformasi dari "${parent}"`;
+        }
+      }
+    } else {
+      if (dom.hudFromWord) dom.hudFromWord.textContent = '–';
+      if (dom.hudFromChip) dom.hudFromChip.hidden = true;
+      if (dom.hudDiffDesc) dom.hudDiffDesc.textContent = `Titik awal: "${current}"`;
+    }
+  }
+
+  if (dom.hudDepthVal) dom.hudDepthVal.textContent = current ? String(app.replay.state.depthOf(current) ?? 0) : '0';
+  if (dom.hudQueueVal) dom.hudQueueVal.textContent = String(replay.state.frontierSize);
+  if (dom.hudVisitedVal) dom.hudVisitedVal.textContent = String(app.replay.state.visited);
+  if (dom.tabFrontierCount) dom.tabFrontierCount.textContent = String(replay.state.frontierSize);
+
   dom.frontierLabel.textContent = frontierLabel(app.result.frontierMode);
   dom.frontierTotal.textContent = String(replay.state.frontierSize);
   dom.frontierList.replaceChildren(
-    ...app.replay.state.frontierPreview(10).map((word) => {
+    ...app.replay.state.frontierPreview(15).map((word) => {
       const item = document.createElement('li');
-      item.textContent = word;
+      item.className = 'frontier-item';
+      const p = app.replay.state.parentOf(word);
+      const diff = getDiff(p, word);
+
+      const wordSpan = document.createElement('span');
+      wordSpan.className = 'frontier-word font-mono';
+      wordSpan.textContent = word;
+      item.appendChild(wordSpan);
+
+      if (p) {
+        const fromSpan = document.createElement('span');
+        fromSpan.className = 'frontier-parent';
+        fromSpan.textContent = ` (dari ${p}${diff ? `, ubah '${diff.toChar}'` : ''})`;
+        item.appendChild(fromSpan);
+      }
       return item;
     }),
   );
 
   dom.statDiscovered.textContent = String(app.replay.state.discovered);
-dom.statVisited.textContent = String(app.replay.state.visited);
+  dom.statVisited.textContent = String(app.replay.state.visited);
 
-const current = app.replay.state.current;
-dom.statDepth.textContent = current
-  ? String(app.replay.state.depthOf(current) ?? '\u2013')
-  : '\u2013';
+  dom.statDepth.textContent = current
+    ? String(app.replay.state.depthOf(current) ?? '\u2013')
+    : '\u2013';
 
-dom.statDrawn.textContent = String(
-  app.renderer ? app.renderer.counts().rendered : 0,
-);
-dom.statHidden.textContent = String(
-  app.renderer ? app.renderer.counts().hidden : 0,
-);
+  dom.statDrawn.textContent = String(
+    app.renderer ? app.renderer.counts().rendered : 0,
+  );
+  dom.statHidden.textContent = String(
+    app.renderer ? app.renderer.counts().hidden : 0,
+  );
 
-const pathWords = app.replay.state.pathWords ?? [];
+  const pathWords = app.replay.state.pathWords ?? [];
 
-dom.statPath.textContent = pathWords.length > 0
-  ? String(pathWords.length - 1)
-  : '\u2013';
+  dom.statPath.textContent = pathWords.length > 0
+    ? String(pathWords.length - 1)
+    : '\u2013';
 
-dom.pathList.replaceChildren(
-  ...pathWords.map((word) => {
-    const item = document.createElement('li');
-    item.textContent = word;
-    return item;
-  }),
-);
+  if (dom.tabPathCount) dom.tabPathCount.textContent = String(pathWords.length > 0 ? pathWords.length - 1 : 0);
+
+  dom.pathList.replaceChildren(
+    ...pathWords.map((word, idx) => {
+      const item = document.createElement('li');
+      item.className = 'ladder-step' + (idx === 0 ? ' start' : idx === pathWords.length - 1 ? ' end' : '');
+      const prevWord = idx > 0 ? pathWords[idx - 1] : null;
+      const diff = getDiff(prevWord, word);
+
+      const badge = document.createElement('span');
+      badge.className = 'step-idx';
+      badge.textContent = idx === 0 ? 'AWAL' : idx === pathWords.length - 1 ? 'TUJUAN' : `Langkah ${idx}`;
+
+      const tiles = renderWordTiles(word, diff ? diff.index : -1);
+      item.append(badge, tiles);
+
+      if (diff) {
+        const note = document.createElement('span');
+        note.className = 'step-note';
+        note.innerHTML = `<span class="letter-change">Huruf #${diff.index + 1}: <strong>'${diff.fromChar}'</strong> ➔ <strong>'${diff.toChar}'</strong></span>`;
+        item.append(note);
+      }
+      return item;
+    }),
+  );
   updateHiddenCount();
 }
 
@@ -377,7 +514,19 @@ function updateTransport() {
   const { index, total, playing } = app.replay;
   dom.back.disabled = index === 0;
   dom.step.disabled = index >= total;
-  dom.play.textContent = playing ? 'Pause' : 'Play';
+  if (dom.skip) dom.skip.disabled = index >= total;
+
+  if (dom.playIcon && dom.playText) {
+    dom.playIcon.textContent = playing ? '⏸' : '▶';
+    dom.playText.textContent = playing ? 'Jeda' : 'Putar';
+  } else {
+    dom.play.textContent = playing ? 'Pause' : 'Play';
+  }
+
+  if (dom.stepCounter) {
+    dom.stepCounter.textContent = `Langkah ${index} / ${total}`;
+  }
+
   dom.scrub.max = String(total);
   dom.scrub.value = String(index);
   dom.scrub.disabled = total === 0;
@@ -388,13 +537,20 @@ function updateTransport() {
 dom.back.addEventListener('click', () => app.replay?.back());
 dom.play.addEventListener('click', () => app.replay?.toggle());
 dom.step.addEventListener('click', () => app.replay?.step());
+dom.skip?.addEventListener('click', () => app.replay?.seek(app.replay.total));
 dom.scrub.addEventListener('input', () => app.replay?.seek(Number(dom.scrub.value)));
 dom.speed.addEventListener('input', () => {
-  const stop = SPEED_STOPS[Number(dom.speed.value)];
-  dom.speedLabel.textContent = speedLabel(stop);
+  const stop = PLAYBACK_SPEEDS[Number(dom.speed.value)] ?? 64;
+  dom.speedLabel.textContent = stop === 240 ? '240/s 🚀' : speedLabel(stop);
   app.replay?.setSpeed(stop);
 });
-dom.speed.value = String(SPEED_STOPS.indexOf(DEFAULT_SPEED));
+dom.turboBtn?.addEventListener('click', () => {
+  dom.speed.value = String(PLAYBACK_SPEEDS.length - 1);
+  const stop = PLAYBACK_SPEEDS[PLAYBACK_SPEEDS.length - 1];
+  dom.speedLabel.textContent = '240/s 🚀';
+  app.replay?.setSpeed(stop);
+});
+dom.speed.value = String(PLAYBACK_SPEEDS.indexOf(DEFAULT_SPEED));
 dom.speedLabel.textContent = speedLabel(DEFAULT_SPEED);
 
 /* ---------- misc wiring ---------- */
@@ -420,6 +576,12 @@ for (const input of [dom.startInput, dom.endInput]) {
 }
 
 dom.recenter.addEventListener('click', () => app.renderer?.fit());
+dom.focusCurrent?.addEventListener('click', () => {
+  const current = app.replay?.state?.current;
+  if (current && app.renderer) {
+    app.renderer.centerOn(current);
+  }
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) app.replay?.pause();

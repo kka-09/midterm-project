@@ -6,86 +6,160 @@ import { createRadialLayout } from './layout.js';
  * It contains no algorithm logic; all state comes from the replay engine.
  */
 
-const TRANSITION_MS = 150;
+const TRANSITION_MS = 60;
 
 const PALETTE = {
   light: {
-    background: '#f7f8fa',
+    background: '#f8fafc',
     node: '#ffffff',
-    nodeBorder: '#8a93a6',
-    text: '#1f2430',
-    visited: '#d7e3ff',
-    visitedBorder: '#3b6fd4',
-    current: '#ffd9a0',
+    nodeBorder: '#94a3b8',
+    text: '#0f172a',
+    visited: '#dbeafe',
+    visitedBorder: '#3b82f6',
+    current: '#fef3c7',
     currentBorder: '#d97706',
-    startBorder: '#15803d',
-    endBorder: '#b91c1c',
-    pathBorder: '#7c3aed',
-    pathText: '#3b1d7a',
-    edge: '#aab2c4',
-    pathEdge: '#7c3aed',
+    currentText: '#92400e',
+    startBorder: '#10b981',
+    startBg: '#ecfdf5',
+    startText: '#065f46',
+    endBorder: '#f43f5e',
+    endBg: '#fff1f2',
+    endText: '#9f1239',
+    pathBorder: '#8b5cf6',
+    pathBg: '#f3e8ff',
+    pathText: '#581c87',
+    edge: '#cbd5e1',
+    pathEdge: '#8b5cf6',
   },
   dark: {
-    background: '#12151c',
-    node: '#1c212c',
-    nodeBorder: '#5b647a',
-    text: '#e8ecf4',
-    visited: '#243a63',
-    visitedBorder: '#6f9bf0',
-    current: '#4a3a16',
-    currentBorder: '#e0a83c',
-    startBorder: '#4ade80',
-    endBorder: '#f87171',
-    pathBorder: '#a78bfa',
-    pathText: '#e9ddff',
-    edge: '#4a5265',
-    pathEdge: '#a78bfa',
+    background: '#0b0f19',
+    node: '#1e293b',
+    nodeBorder: '#475569',
+    text: '#f8fafc',
+    visited: '#1e3a5f',
+    visitedBorder: '#60a5fa',
+    current: '#451a03',
+    currentBorder: '#fbbf24',
+    currentText: '#fef3c7',
+    startBorder: '#34d399',
+    startBg: '#064e3b',
+    startText: '#a7f3d0',
+    endBorder: '#fb7185',
+    endBg: '#881337',
+    endText: '#fecdd3',
+    pathBorder: '#c084fc',
+    pathBg: '#581c87',
+    pathText: '#f3e8ff',
+    edge: '#334155',
+    pathEdge: '#c084fc',
   },
 };
 
 function stylesFor(theme) {
   const c = PALETTE[theme] ?? PALETTE.light;
-  const nodeShape = 'ellipse';
   return [
     {
       selector: 'node',
       style: {
-        shape: nodeShape,
+        shape: 'ellipse',
         label: 'data(label)',
         'background-color': c.node,
         'border-color': c.nodeBorder,
         'border-width': 2,
         color: c.text,
+        'font-family': "'JetBrains Mono', 'Segoe UI Mono', ui-monospace, monospace",
         'font-size': 11,
+        'font-weight': '600',
         'text-valign': 'center',
         'text-halign': 'center',
-        width: 18,
-        height: 18,
-        'min-zoomed-font-size': 8,
+        width: 30,
+        height: 30,
+        'min-zoomed-font-size': 7,
         'transition-property': 'background-color, border-color, border-width, opacity, width, height',
         'transition-duration': `${TRANSITION_MS}ms`,
       },
     },
-    { selector: 'node.start', style: { shape: 'round-rectangle', 'border-color': c.startBorder, 'border-width': 3 } },
-    { selector: 'node.end', style: { shape: 'diamond', 'border-color': c.endBorder, 'border-width': 3 } },
-    { selector: 'node.frontier', style: { 'background-color': 'transparent', 'border-color': c.nodeBorder, 'border-style': 'dashed' } },
-    { selector: 'node.visited', style: { 'background-color': c.visited, 'border-color': c.visitedBorder } },
-    { selector: 'node.current', style: { 'background-color': c.current, 'border-color': c.currentBorder, 'border-width': 4, width: 26, height: 26 } },
-    { selector: 'node.path', style: { 'border-color': c.pathBorder, 'border-width': 4, color: c.pathText, 'z-index': 20 } },
-    { selector: 'node.dim', style: { opacity: 0.25 } },
+    {
+      selector: 'node.start',
+      style: {
+        shape: 'round-rectangle',
+        'border-color': c.startBorder,
+        'border-width': 3.5,
+        'background-color': c.startBg ?? c.node,
+        color: c.startText ?? c.text,
+        width: 34,
+        height: 34,
+        'z-index': 15,
+      },
+    },
+    {
+      selector: 'node.end',
+      style: {
+        shape: 'diamond',
+        'border-color': c.endBorder,
+        'border-width': 3.5,
+        'background-color': c.endBg ?? c.node,
+        color: c.endText ?? c.text,
+        width: 34,
+        height: 34,
+        'z-index': 15,
+      },
+    },
+    {
+      selector: 'node.frontier',
+      style: {
+        'background-color': 'transparent',
+        'border-color': c.nodeBorder,
+        'border-style': 'dashed',
+        'border-width': 1.8,
+      },
+    },
+    {
+      selector: 'node.visited',
+      style: {
+        'background-color': c.visited,
+        'border-color': c.visitedBorder,
+        'border-width': 2,
+      },
+    },
+    {
+      selector: 'node.current',
+      style: {
+        'background-color': c.current,
+        'border-color': c.currentBorder,
+        'border-width': 4,
+        color: c.currentText ?? c.text,
+        width: 38,
+        height: 38,
+        'z-index': 30,
+      },
+    },
+    {
+      selector: 'node.path',
+      style: {
+        'border-color': c.pathBorder,
+        'background-color': c.pathBg ?? c.node,
+        'border-width': 4,
+        color: c.pathText,
+        width: 36,
+        height: 36,
+        'z-index': 25,
+      },
+    },
+    { selector: 'node.dim', style: { opacity: 0.18 } },
     {
       selector: 'edge',
       style: {
         'curve-style': 'bezier',
         'line-color': c.edge,
-        width: 1.5,
+        width: 1.8,
         'target-arrow-shape': 'none',
         'transition-property': 'line-color, width, opacity',
         'transition-duration': `${TRANSITION_MS}ms`,
       },
     },
-    { selector: 'edge.path', style: { 'line-color': c.pathEdge, width: 3, 'z-index': 20 } },
-    { selector: 'edge.dim', style: { opacity: 0.15 } },
+    { selector: 'edge.path', style: { 'line-color': c.pathEdge, width: 3.8, 'z-index': 20 } },
+    { selector: 'edge.dim', style: { opacity: 0.12 } },
   ];
 }
 
@@ -140,9 +214,18 @@ export function createRenderer(container, options = {}) {
         motionBlur: false,
         autoungrabify: true,
         boxSelectionEnabled: false,
-        minZoom: 0.05,
-        maxZoom: 2.5,
+        minZoom: 0.1,
+        maxZoom: 3,
       });
+
+  function centerStart() {
+    if (headless || !container) return;
+    const w = container.clientWidth || 600;
+    const h = container.clientHeight || 400;
+    cy.pan({ x: w / 2, y: h / 2 });
+    cy.zoom(1.1);
+  }
+  centerStart();
 
   function addEdge(parent, child) {
     const id = edgeId(parent, child);
@@ -169,6 +252,14 @@ export function createRenderer(container, options = {}) {
     });
     drawn.add(word);
     if (parent !== null && parent !== undefined && drawn.has(parent)) addEdge(parent, word);
+
+    // Ensure the start node is immediately centered upon creation
+    if (drawn.size === 1 && !headless) {
+      const firstEle = cy.getElementById(word);
+      if (firstEle && firstEle.nonempty()) {
+        cy.center(firstEle);
+      }
+    }
     return true;
   }
 
@@ -253,6 +344,13 @@ export function createRenderer(container, options = {}) {
       });
     });
     pathDrawn = true;
+    if (!headless && cy.elements('.path').length > 0) {
+      if (reducedMotion) {
+        cy.fit(cy.elements('.path'), 48);
+      } else {
+        cy.animate({ fit: { eles: cy.elements('.path'), padding: 48 } }, { duration: 400 });
+      }
+    }
   }
 
   function rebuild(state) {
@@ -280,24 +378,60 @@ export function createRenderer(container, options = {}) {
   function apply(change, state) {
     if (destroyed) return;
     if (change.kind === 'forward') {
-      for (const event of change.events) {
-        if (event.type === 'discover') onDiscover(event);
-        else if (event.type === 'reparent') onReparent(event);
-        else if (event.type === 'visit') onVisit(event);
-        else if (event.type === 'path') drawPath(event.words, state);
+      const applyAll = () => {
+        for (const event of change.events) {
+          if (event.type === 'discover') onDiscover(event);
+          else if (event.type === 'reparent') onReparent(event);
+          else if (event.type === 'visit') onVisit(event);
+          else if (event.type === 'path') drawPath(event.words, state);
+        }
+      };
+      if (typeof cy.batch === 'function') {
+        cy.batch(applyAll);
+      } else {
+        applyAll();
       }
     } else if (change.kind === 'backward' || change.kind === 'reset') {
       if (state) rebuild(state);
     }
   }
 
-  function fit() {
-    if (destroyed) return;
-    if (headless) return;
+  function fit(target = null, padding = 36) {
+    if (destroyed || headless) return;
+    const targetEles = target ? (typeof target === 'string' ? cy.getElementById(target) : target) : null;
+    const eles = targetEles && targetEles.nonempty && targetEles.nonempty() ? targetEles : cy.elements();
+
+    if (eles.length === 0) {
+      centerStart();
+      return;
+    }
+
+    if (eles.length === 1 && eles.isNode()) {
+      if (reducedMotion) {
+        cy.center(eles);
+        cy.zoom(1.15);
+      } else {
+        cy.animate({ center: { eles }, zoom: 1.15 }, { duration: 250 });
+      }
+      return;
+    }
+
     if (reducedMotion) {
-      cy.fit(undefined, 24);
+      cy.fit(eles, padding);
     } else {
-      cy.animate({ fit: { padding: 24 } }, { duration: 200 });
+      cy.animate({ fit: { eles, padding } }, { duration: 250 });
+    }
+  }
+
+  function centerOn(word, animate = false) {
+    if (destroyed || headless || !word) return;
+    const ele = cy.getElementById(word);
+    if (ele && ele.nonempty && ele.nonempty()) {
+      if (!animate || reducedMotion) {
+        cy.center(ele);
+      } else {
+        cy.animate({ center: { eles: ele } }, { duration: 150 });
+      }
     }
   }
 
@@ -340,5 +474,5 @@ export function createRenderer(container, options = {}) {
     if (cy && typeof cy.destroy === 'function') cy.destroy();
   }
 
-  return { apply, fit, setTheme, counts, elements, destroy };
+  return { apply, fit, centerOn, setTheme, counts, elements, destroy };
 }
