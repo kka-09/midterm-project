@@ -120,10 +120,21 @@
         <button class="tab" role="tab" data-panel="stats" aria-selected="false">📊 Statistik</button>
         <button class="tab" role="tab" data-panel="path" aria-selected="false">🪜 Solusi Ladder (<span
             id="tab-path-count">0</span>)</button>
+        <button class="tab" role="tab" data-panel="guide" aria-selected="false">📘 Cara Kerja</button>
       </div>
 
       <div class="panels">
         <section class="panel" id="panel-setup" data-panel="setup">
+          <div class="length-selector">
+            <span class="length-label">Panjang Kata:</span>
+            <div class="length-chips" id="length-chips">
+              <button type="button" class="len-chip" data-len="3">3 Huruf</button>
+              <button type="button" class="len-chip active" data-len="4">4 Huruf</button>
+              <button type="button" class="len-chip" data-len="5">5 Huruf</button>
+              <button type="button" class="len-chip" data-len="6">6 Huruf</button>
+            </div>
+          </div>
+
           <div class="fields">
             <label class="field">
               <span>Kata Awal (Start)</span>
@@ -194,10 +205,76 @@
 
         <section class="panel" id="panel-path" data-panel="path" hidden>
           <div class="path-header">
-            <span class="path-title">Transformasi Kata Bertahap (Word Ladder)</span>
-            <span class="path-hint">Setiap langkah mengganti tepat 1 huruf</span>
+            <div class="path-header-top">
+              <span class="path-title">Solusi Word Ladder Matrix</span>
+              <span class="path-steps-badge" id="path-steps-badge">0 Langkah</span>
+            </div>
+            <span class="path-hint">🟩 Hijau = Huruf cocok dengan target · 🟨 Berbingkai = Huruf berubah dari langkah
+              sebelumnya</span>
+            <div class="path-toolbar">
+              <div class="view-switch" role="group" aria-label="Tampilan Solusi">
+                <button type="button" id="btn-view-matrix" class="view-btn active"
+                  title="Tampilan Kotak Matriks Wordle">🟩 Matriks</button>
+                <button type="button" id="btn-view-list" class="view-btn" title="Tampilan Daftar Tangga">🪜
+                  Tangga</button>
+              </div>
+              <div class="path-actions">
+                <button type="button" id="btn-copy-solution" class="chip-btn" title="Salin rute solusi">📋 Salin
+                  Solusi</button>
+                <button type="button" id="btn-share-link" class="chip-btn" title="Salin tautan Word Ladder">🔗 Bagikan
+                  Link</button>
+              </div>
+            </div>
           </div>
-          <ol class="word-list ladder-list" id="path-list"></ol>
+          <div class="solution-matrix-container" id="solution-matrix"></div>
+          <ol class="word-list ladder-list" id="path-list" hidden></ol>
+        </section>
+
+        <section class="panel" id="panel-guide" data-panel="guide" hidden>
+          <div class="guide-container">
+            <div class="guide-card">
+              <h3>🪜 Apa itu Word Ladder Puzzle?</h3>
+              <p>
+                Permainan kata klasik yang diciptakan oleh Lewis Carroll (1877). Tujuannya adalah mengubah <strong>Kata
+                  Awal</strong> menjadi <strong>Kata Tujuan</strong> dengan mengganti tepat <strong>satu huruf</strong>
+                di setiap langkah, di mana seluruh kata perantara harus merupakan kata baku yang sah dalam kamus bahasa.
+              </p>
+            </div>
+
+            <div class="guide-card">
+              <h3>🌐 Model Teori Graf (Graph Traversal)</h3>
+              <p>
+                Permainan ini dimodelkan sebagai penelusuran graf tak berarah (<em>undirected graph</em>):
+              </p>
+              <ul>
+                <li><strong>Node (Simpul)</strong>: Setiap kata unik dalam kamus.</li>
+                <li><strong>Edge (Sisi)</strong>: Menghubungkan dua kata jika jarak Hamming-nya tepat 1 (berbeda 1
+                  huruf).</li>
+              </ul>
+            </div>
+
+            <div class="guide-card">
+              <h3>🔍 Perbandingan Algoritma Pencarian</h3>
+              <div class="algo-comparison-table">
+                <div class="algo-row">
+                  <strong>1. Breadth-First Search (BFS)</strong>
+                  <p>Mengeksplorasi graf secara lapis-demi-lapis menggunakan antrean FIFO. <strong>Dijamin selalu
+                      menemukan tangga terpendek</strong> (langkah paling sedikit). Kompleksitas waktu:
+                    <code>O(N × M)</code>.</p>
+                </div>
+                <div class="algo-row">
+                  <strong>2. Greedy Best-First Search</strong>
+                  <p>Menggunakan heuristik Jarak Hamming untuk langsung memprioritaskan kata yang paling mirip dengan
+                    tujuan. Sangat cepat, namun tidak menjamin rute terpendek.</p>
+                </div>
+                <div class="algo-row">
+                  <strong>3. A* Search Algorithm</strong>
+                  <p>Menggabungkan biaya langkah <code>g(n)</code> dan perkiraan heuristik <code>h(n)</code>:
+                    <code>f(n) = g(n) + h(n)</code>. Memberikan rute terpendek secara terarah dan teroptimasi.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
 
@@ -211,7 +288,8 @@
         <button id="step-button" type="button" class="transport-button" aria-label="Step forward" title="Langkah Maju">
           Maju <span>▶</span>
         </button>
-        <button id="skip-button" type="button" class="transport-button skip-btn" aria-label="Skip to end" title="Lompat Langsung ke Solusi">
+        <button id="skip-button" type="button" class="transport-button skip-btn" aria-label="Skip to end"
+          title="Lompat Langsung ke Solusi">
           <span>⏭️</span> Solusi
         </button>
       </div>
@@ -230,7 +308,8 @@
         <label for="speed">⚡ Kecepatan:</label>
         <input id="speed" type="range" min="0" max="8" step="1" value="2" aria-label="Playback speed" />
         <output id="speed-label" for="speed">4/s</output>
-        <button id="turbo-btn" type="button" class="turbo-badge-btn" title="Set ke Kecepatan Maksimal 240/s">🚀 Turbo</button>
+        <button id="turbo-btn" type="button" class="turbo-badge-btn" title="Set ke Kecepatan Maksimal 240/s">🚀
+          Turbo</button>
       </div>
     </section>
 

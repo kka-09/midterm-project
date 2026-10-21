@@ -74,6 +74,14 @@ const dom = {
   hudQueueVal: el('hud-queue-val'),
   hudVisitedVal: el('hud-visited-val'),
   tabFrontierCount: el('tab-frontier-count'),
+  tabPathCount: el('tab-path-count'),
+  solutionMatrix: el('solution-matrix'),
+  pathStepsBadge: el('path-steps-badge'),
+  btnViewMatrix: el('btn-view-matrix'),
+  btnViewList: el('btn-view-list'),
+  btnCopySolution: el('btn-copy-solution'),
+  btnShareLink: el('btn-share-link'),
+  lengthChips: el('length-chips'),
 };
 
 const PLAYBACK_SPEEDS = [...SPEED_STOPS, 120, 240];
@@ -329,6 +337,59 @@ function renderWordTiles(word, highlightIndex = -1) {
   return container;
 }
 
+function renderSolutionMatrix(container, pathWords) {
+  if (!container) return;
+  container.replaceChildren();
+  if (!pathWords || pathWords.length === 0) return;
+
+  const targetWord = pathWords[pathWords.length - 1];
+  const wordLen = targetWord.length;
+
+  const matrix = document.createElement('div');
+  matrix.className = 'wordle-matrix';
+
+  for (let r = 0; r < pathWords.length; r++) {
+    const word = pathWords[r];
+    const prevWord = r > 0 ? pathWords[r - 1] : null;
+
+    const rowEl = document.createElement('div');
+    rowEl.className = 'matrix-row';
+
+    const stepLabel = document.createElement('span');
+    stepLabel.className = 'matrix-row-label';
+    stepLabel.textContent = r === 0 ? 'START' : r === pathWords.length - 1 ? 'GOAL' : `#${r}`;
+
+    const tilesWrapper = document.createElement('div');
+    tilesWrapper.className = 'matrix-tiles';
+    tilesWrapper.style.gridTemplateColumns = `repeat(${wordLen}, 1fr)`;
+
+    for (let c = 0; c < wordLen; c++) {
+      const char = word[c];
+      const box = document.createElement('div');
+      box.className = 'matrix-box';
+      box.textContent = char.toUpperCase();
+
+      if (char === targetWord[c]) {
+        box.classList.add('correct');
+      } else {
+        box.classList.add('wrong');
+      }
+
+      if (prevWord && char !== prevWord[c]) {
+        box.classList.add('changed-letter');
+      }
+
+      tilesWrapper.appendChild(box);
+    }
+
+    rowEl.appendChild(stepLabel);
+    rowEl.appendChild(tilesWrapper);
+    matrix.appendChild(rowEl);
+  }
+
+  container.appendChild(matrix);
+}
+
 function onReplayChange(change) {
   if (!app.replay || !app.renderer) return;
   app.renderer.apply(change, app.replay.state);
@@ -472,6 +533,9 @@ function paintPanels() {
     : '\u2013';
 
   if (dom.tabPathCount) dom.tabPathCount.textContent = String(pathWords.length > 0 ? pathWords.length - 1 : 0);
+  if (dom.pathStepsBadge) dom.pathStepsBadge.textContent = pathWords.length > 0 ? `${pathWords.length - 1} Langkah` : '0 Langkah';
+
+  renderSolutionMatrix(dom.solutionMatrix, pathWords);
 
   dom.pathList.replaceChildren(
     ...pathWords.map((word, idx) => {
@@ -582,6 +646,66 @@ dom.focusCurrent?.addEventListener('click', () => {
     app.renderer.centerOn(current);
   }
 });
+
+// View switch between Matrix and List
+dom.btnViewMatrix?.addEventListener('click', () => {
+  if (dom.solutionMatrix) dom.solutionMatrix.hidden = false;
+  if (dom.pathList) dom.pathList.hidden = true;
+  dom.btnViewMatrix?.classList.add('active');
+  dom.btnViewList?.classList.remove('active');
+});
+
+dom.btnViewList?.addEventListener('click', () => {
+  if (dom.solutionMatrix) dom.solutionMatrix.hidden = true;
+  if (dom.pathList) dom.pathList.hidden = false;
+  dom.btnViewList?.classList.add('active');
+  dom.btnViewMatrix?.classList.remove('active');
+});
+
+// Copy Solution
+dom.btnCopySolution?.addEventListener('click', () => {
+  const pathWords = app.replay?.state?.pathWords ?? [];
+  if (pathWords.length === 0) return;
+  const text = `Word Ladder (${pathWords.length - 1} langkah):\n${pathWords.join(' ➔ ')}`;
+  navigator.clipboard?.writeText(text).then(() => {
+    const prev = dom.btnCopySolution.textContent;
+    dom.btnCopySolution.textContent = '✅ Tersalin!';
+    setTimeout(() => { if (dom.btnCopySolution) dom.btnCopySolution.textContent = prev; }, 1800);
+  });
+});
+
+// Share Link
+dom.btnShareLink?.addEventListener('click', () => {
+  navigator.clipboard?.writeText(window.location.href).then(() => {
+    const prev = dom.btnShareLink.textContent;
+    dom.btnShareLink.textContent = '✅ Link Tersalin!';
+    setTimeout(() => { if (dom.btnShareLink) dom.btnShareLink.textContent = prev; }, 1800);
+  });
+});
+
+// Length selector chips
+const LEN_EXAMPLES = {
+  3: { start: 'cat', end: 'mau' },
+  4: { start: 'kata', end: 'bola' },
+  5: { start: 'makan', end: 'rumah' },
+  6: { start: 'pulang', end: 'datang' },
+};
+if (dom.lengthChips) {
+  for (const chip of dom.lengthChips.querySelectorAll('.len-chip')) {
+    chip.addEventListener('click', () => {
+      for (const c of dom.lengthChips.querySelectorAll('.len-chip')) c.classList.remove('active');
+      chip.classList.add('active');
+      const len = Number(chip.dataset.len);
+      const sample = LEN_EXAMPLES[len];
+      if (sample) {
+        dom.startInput.value = sample.start;
+        dom.endInput.value = sample.end;
+        clearErrors();
+        syncHash();
+      }
+    });
+  }
+}
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) app.replay?.pause();
