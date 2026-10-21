@@ -13,6 +13,7 @@ Proyek Tengah Semester (UTS) mata kuliah Konsep Kecerdasan Artifisial, Institut 
 - [Fitur](#fitur)
 - [Formulasi Masalah](#formulasi-masalah)
 - [Algoritma](#algoritma)
+- [Akses Online (GitHub Pages)](#akses-online-github-pages)
 - [Menjalankan Aplikasi](#menjalankan-aplikasi)
 - [Cara Pakai](#cara-pakai)
 - [CLI](#cli)
@@ -70,6 +71,20 @@ Catatan implementasi:
 - A\* mendukung event `reparent` ketika ditemukan rute yang lebih pendek ke node yang sudah *discovered*.
 - Semua algoritma punya batas `SEARCH_MAX_VISITS = 50000`. Jika terlampaui, pencarian berhenti dengan alasan `limit`.
 - Ketiganya mengembalikan struktur hasil yang sama: `{ algorithm, found, path, events, stats }`.
+
+---
+
+## Akses Online (GitHub Pages)
+
+Aplikasi sudah dipublikasikan lewat GitHub Pages dan bisa langsung dibuka tanpa instalasi:
+
+**https://kka-09.github.io/midterm-project/**
+
+Pindai kode QR berikut untuk membuka di ponsel:
+
+<a href="https://kka-09.github.io/midterm-project/">
+  <img src="qr.png" alt="Kode QR menuju https://kka-09.github.io/midterm-project/" width="220">
+</a>
 
 ---
 
